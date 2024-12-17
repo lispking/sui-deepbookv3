@@ -1,0 +1,16 @@
+[package]
+name = "sui-deepbookv3"
+version = "0.1.0"
+authors = ["King <lispking@qq.com>"]
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+sui_sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk" }
+sui_config = { git = "https://github.com/mystenlabs/sui", package = "sui-config" }
+sui_keys = { git = "https://github.com/mystenlabs/sui", package = "sui-keys" }
+shared_crypto = { git = "https://github.com/mystenlabs/sui", package = "shared-crypto" }
+tokio = { version = "1.2", features = ["full"] }
+anyhow = "1.0"
+lazy_static = "1.5.0"
+serde_json = "1.0.133"
