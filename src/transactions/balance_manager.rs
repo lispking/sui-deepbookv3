@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use sui_json_rpc_types::{SuiObjectData, SuiObjectDataOptions};
-use sui_sdk::types::base_types::{ObjectID, SequenceNumber, SuiAddress};
+use sui_sdk::types::base_types::{ObjectID, SuiAddress};
 use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use sui_sdk::types::transaction::ObjectArg;
 use sui_sdk::types::{Identifier, TypeTag, SUI_FRAMEWORK_PACKAGE_ID};
@@ -75,7 +75,7 @@ impl BalanceManagerContract {
         let deposit_input = amount_to_deposit * coin.scalar;
         // TODO: input coin
 
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
+        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
         let deposit = ptb.pure(deposit_input)?;
         ptb.programmable_move_call(
             package_id,
@@ -108,7 +108,7 @@ impl BalanceManagerContract {
         let withdraw_input = amount_to_withdraw * coin.scalar;
         // TODO: input coin
 
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
+        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
         let withdraw = ptb.pure(withdraw_input)?;
         let coin_object = ptb.programmable_move_call(
             package_id,
@@ -139,7 +139,7 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
 
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
+        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
         let withdrawal_coin = ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
@@ -286,6 +286,15 @@ impl BalanceManagerContract {
     }
 
     async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
+        let object = self.get_object(manager_id).await?;
+        Ok(ObjectArg::SharedObject {
+            id: manager_id,
+            initial_shared_version: object.version,
+            mutable: false,
+        })
+    }
+
+    async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
         let object = self.get_object(manager_id).await?;
         Ok(ObjectArg::SharedObject {
             id: manager_id,
