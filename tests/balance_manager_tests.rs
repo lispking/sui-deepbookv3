@@ -1,88 +1,76 @@
-use shared_crypto::intent::Intent;
-use sui_config::{sui_config_dir, SUI_KEYSTORE_FILENAME};
+use std::collections::HashMap;
+
 use sui_deepbookv3::{
     transactions::balance_manager::BalanceManagerContract,
-    utils::config::{DeepBookConfig, Environment},
+    utils::{config::{DeepBookConfig, Environment}, constants::BalanceManager},
 };
-use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
-use sui_sdk::{
-    rpc_types::SuiTransactionBlockResponseOptions,
-    types::{
-        base_types::SuiAddress,
-        programmable_transaction_builder::ProgrammableTransactionBuilder,
-        quorum_driver_types::ExecuteTransactionRequestType,
-        transaction::{Transaction, TransactionData},
-    },
-    SuiClientBuilder,
-};
-use utils::retrieve_wallet;
+use sui_sdk::{types::{
+    base_types::SuiAddress, programmable_transaction_builder::ProgrammableTransactionBuilder,
+}, SuiClientBuilder};
+use utils::{dry_run_transaction, execute_transaction};
 
 mod utils;
 
 #[tokio::test]
 async fn test_create_and_share_balance_manager() {
     let sui_client = SuiClientBuilder::default().build_testnet().await.unwrap();
-    println!("Sui testnet version: {}", sui_client.api_version());
 
-    let mut wallet = retrieve_wallet().unwrap();
-    let sender = wallet.active_address().unwrap();
-    println!("Sender: {}", sender);
-
-    let coins = sui_client
-        .coin_read_api()
-        .get_coins(sender, None, None, None)
-        .await.unwrap();
-    let coin = coins.data.into_iter().next().unwrap();
-
-    let config = DeepBookConfig::new(
-        Environment::Testnet,
-        SuiAddress::random_for_testing_only(),
-        None,
-        None,
-        None,
-        None,
-    );
+    let config = deep_book_config();
     println!("config: {:#?}", config);
 
-    let balance_manager = BalanceManagerContract::new(config);
+    let balance_manager = BalanceManagerContract::new(config, sui_client);
 
     let mut ptb = ProgrammableTransactionBuilder::new();
 
     let _ = balance_manager.create_and_share_balance_manager(&mut ptb);
+    execute_transaction(ptb).await;
+}
 
-    let builder = ptb.finish();
-    println!("{:?}", builder);
+#[tokio::test]
+async fn test_balance_manager_owner() {
+    let sui_client = SuiClientBuilder::default().build_testnet().await.unwrap();
 
-    let gas_budget = 10_000_000;
-    let gas_price = sui_client
-        .read_api()
-        .get_reference_gas_price()
-        .await
-        .unwrap();
-    // create the transaction data that will be sent to the network
-    let tx_data = TransactionData::new_programmable(
-        sender,
-        vec![coin.object_ref()],
-        builder,
-        gas_budget,
-        gas_price,
-    );
+    let config = deep_book_config();
 
-    // 4) sign transaction
-    let keystore =
-        FileBasedKeystore::new(&sui_config_dir().unwrap().join(SUI_KEYSTORE_FILENAME)).unwrap();
-    let signature = keystore.sign_secure(&sender, &tx_data, Intent::sui_transaction()).unwrap();
+    let balance_manager = BalanceManagerContract::new(config, sui_client.clone());
 
-    // 5) execute the transaction
-    print!("Executing the transaction...");
-    let transaction_response = sui_client
-        .quorum_driver_api()
-        .execute_transaction_block(
-            Transaction::from_data(tx_data, vec![signature]),
-            SuiTransactionBlockResponseOptions::full_content(),
-            Some(ExecuteTransactionRequestType::WaitForLocalExecution),
-        )
-        .await
-        .unwrap();
-    println!("{}", transaction_response);
+    let mut ptb = ProgrammableTransactionBuilder::new();
+
+    let _ = balance_manager.owner(&mut ptb, "DEEP").await;
+
+    dry_run_transaction(&sui_client, ptb).await;
+}
+
+
+#[tokio::test]
+async fn test_balance_manager_id() {
+    let sui_client = SuiClientBuilder::default().build_testnet().await.unwrap();
+
+    let config = deep_book_config();
+
+    let balance_manager = BalanceManagerContract::new(config, sui_client.clone());
+
+    let mut ptb = ProgrammableTransactionBuilder::new();
+
+    let _ = balance_manager.id(&mut ptb, "DEEP").await;
+
+    dry_run_transaction(&sui_client, ptb).await;
+}
+
+fn deep_book_config() -> DeepBookConfig {
+    let balance_managers = HashMap::from([
+        ("DEEP", BalanceManager {
+            address: "0x722c39b7b79831d534fbfa522e07101cb881f8807c28b9cf03a58b04c6c5ca9a".to_string(),
+            trade_cap: None,
+        }),
+    ]);
+
+    DeepBookConfig::new(
+        Environment::Testnet,
+        SuiAddress::random_for_testing_only(),
+        None,
+        Some(balance_managers),
+        None,
+        None,
+    )
 }

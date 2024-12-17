@@ -21,7 +21,7 @@ pub struct Pool {
 #[derive(Debug, Clone)]
 pub struct BalanceManager {
     pub address: String,
-    pub coin: String,
+    pub trade_cap: Option<String>,
 }
 
 #[derive(Debug, Clone)]

@@ -1,10 +1,18 @@
+use shared_crypto::intent::Intent;
 use sui_config::{
     sui_config_dir, Config, PersistedConfig, SUI_CLIENT_CONFIG, SUI_KEYSTORE_FILENAME,
 };
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::{
+    rpc_types::SuiTransactionBlockResponseOptions,
     sui_client_config::{SuiClientConfig, SuiEnv},
+    types::{
+        programmable_transaction_builder::ProgrammableTransactionBuilder,
+        quorum_driver_types::ExecuteTransactionRequestType,
+        transaction::{Transaction, TransactionData, TransactionKind},
+    },
     wallet_context::WalletContext,
+    SuiClient, SuiClientBuilder,
 };
 
 pub fn retrieve_wallet() -> anyhow::Result<WalletContext> {
@@ -45,4 +53,87 @@ pub fn retrieve_wallet() -> anyhow::Result<WalletContext> {
     let wallet = WalletContext::new(&wallet_conf, Some(std::time::Duration::from_secs(60)), None)?;
 
     Ok(wallet)
+}
+
+pub async fn execute_transaction(ptb: ProgrammableTransactionBuilder) {
+    let sui_client = SuiClientBuilder::default().build_testnet().await.unwrap();
+    println!("Sui testnet version: {}", sui_client.api_version());
+
+    let mut wallet = retrieve_wallet().unwrap();
+    let sender = wallet.active_address().unwrap();
+    println!("Sender: {}", sender);
+
+    let coins = sui_client
+        .coin_read_api()
+        .get_coins(sender, None, None, None)
+        .await
+        .unwrap();
+    let coin = coins.data.into_iter().next().unwrap();
+
+    let gas_budget = 10_000_000;
+    let gas_price = sui_client
+        .read_api()
+        .get_reference_gas_price()
+        .await
+        .unwrap();
+
+    let builder = ptb.finish();
+    println!("{:?}", builder);
+
+    // create the transaction data that will be sent to the network
+    let tx_data = TransactionData::new_programmable(
+        sender,
+        vec![coin.object_ref()],
+        builder,
+        gas_budget,
+        gas_price,
+    );
+
+    // 4) sign transaction
+    let keystore =
+        FileBasedKeystore::new(&sui_config_dir().unwrap().join(SUI_KEYSTORE_FILENAME)).unwrap();
+    let signature = keystore
+        .sign_secure(&sender, &tx_data, Intent::sui_transaction())
+        .unwrap();
+
+    // 5) execute the transaction
+    print!("Executing the transaction...");
+    let transaction_response = sui_client
+        .quorum_driver_api()
+        .execute_transaction_block(
+            Transaction::from_data(tx_data, vec![signature]),
+            SuiTransactionBlockResponseOptions::full_content(),
+            Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+        )
+        .await
+        .unwrap();
+    println!("{}", transaction_response);
+}
+
+pub async fn dry_run_transaction(sui_client: &SuiClient, ptb: ProgrammableTransactionBuilder) {
+    let mut wallet = retrieve_wallet().unwrap();
+    let sender = wallet.active_address().unwrap();
+    println!("Sender: {}", sender);
+
+    let builder = ptb.finish();
+    let dry_run_response = sui_client
+        .read_api()
+        .dev_inspect_transaction_block(
+            sender,
+            TransactionKind::ProgrammableTransaction(builder),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+    println!(
+        "results: {:#?}",
+        dry_run_response
+            .results
+            .unwrap()
+            .first()
+            .unwrap()
+            .return_values
+    );
 }
