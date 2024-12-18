@@ -7,6 +7,7 @@ use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBui
 use sui_sdk::SuiClient;
 
 use crate::utils::config::{DeepBookConfig, DEEP_SCALAR, FLOAT_SCALAR};
+use crate::utils::types::ProposalParams;
 
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::{Identifier, TypeTag};
@@ -24,8 +25,9 @@ pub struct GovernanceContract {
 impl GovernanceContract {
     /// Creates a new GovernanceContract instance
     ///
-    /// # Arguments
-    /// * `config` - Configuration for GovernanceContract
+    /// @param config - Configuration for GovernanceContract
+    /// @param client - SuiClient instance
+    /// @param balance_manager_contract - BalanceManagerContract instance
     pub fn new(
         config: DeepBookConfig,
         client: SuiClient,
@@ -40,10 +42,9 @@ impl GovernanceContract {
 
     /// Stake a specified amount in the pool
     ///
-    /// # Arguments
-    /// * `pool_key` - The key to identify the pool
-    /// * `balance_manager_key` - The key to identify the BalanceManager
-    /// * `stake_amount` - The amount to stake
+    /// @param pool_key - The key to identify the pool
+    /// @param balance_manager_key - The key to identify the BalanceManager
+    /// @param stake_amount - The amount to stake
     pub async fn stake(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -83,89 +84,138 @@ impl GovernanceContract {
         Ok(())
     }
 
-    // /// Unstake from the pool
-    // ///
-    // /// # Arguments
-    // /// * `pool_key` - The key to identify the pool
-    // /// * `balance_manager_key` - The key to identify the BalanceManager
-    // pub fn unstake<F>(&self, pool_key: &str, balance_manager_key: &str) -> impl FnOnce(&mut Transaction) -> () {
-    //     let pool = self.config.get_pool(pool_key);
-    //     let balance_manager = self.config.get_balance_manager(balance_manager_key);
-    //     let base_coin = self.config.get_coin(&pool.base_coin);
-    //     let quote_coin = self.config.get_coin(&pool.quote_coin);
+    /// UnStake from the pool
+    ///
+    /// @param pool_key - The key to identify the pool
+    /// @param balance_manager_key - The key to identify the BalanceManager
+    pub async fn unstake(
+        &self,
+        ptb: &mut ProgrammableTransactionBuilder,
+        pool_key: &str,
+        balance_manager_key: &str,
+    ) -> anyhow::Result<()> {
+        let pool = self.config.get_pool(pool_key)?;
+        let balance_manager = self.config.get_balance_manager(balance_manager_key)?;
+        let base_coin = self.config.get_coin(&pool.base_coin)?;
+        let quote_coin = self.config.get_coin(&pool.quote_coin)?;
 
-    //     move |tx: &mut Transaction| {
-    //         let trade_proof = tx.add(self.config.balance_manager.generate_proof(balance_manager_key));
+        let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
+        let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
-    //         tx.move_call(
-    //             format!("{}::pool::unstake", self.config.deepbook_package_id()),
-    //             vec![base_coin.type_name.clone(), quote_coin.type_name.clone()],
-    //             vec![
-    //                 tx.object(&pool.address),
-    //                 tx.object(&balance_manager.address),
-    //                 trade_proof,
-    //             ],
-    //         );
-    //     }
-    // }
+        let trade_proof = self
+            .balance_manager_contract
+            .generate_proof(ptb, balance_manager_key)
+            .await?;
 
-    // /// Submit a governance proposal
-    // ///
-    // /// # Arguments
-    // /// * `params` - Parameters for the proposal
-    // pub fn submit_proposal<F>(&self, params: ProposalParams) -> impl FnOnce(&mut Transaction) -> () {
-    //     let pool = self.config.get_pool(&params.pool_key);
-    //     let balance_manager = self.config.get_balance_manager(&params.balance_manager_key);
-    //     let base_coin = self.config.get_coin(&pool.base_coin);
-    //     let quote_coin = self.config.get_coin(&pool.quote_coin);
+        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let arguments = vec![
+            ptb.obj(self.client.share_object(pool_id).await?)?,
+            ptb.obj(self.client.share_object(balance_manager_id).await?)?,
+            trade_proof,
+        ];
 
-    //     let taker_fee = (params.taker_fee * FLOAT_SCALAR as f64).round() as u64;
-    //     let maker_fee = (params.maker_fee * FLOAT_SCALAR as f64).round() as u64;
-    //     let stake_required = (params.stake_required * DEEP_SCALAR as f64).round() as u64;
+        ptb.programmable_move_call(
+            ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
+            Identifier::new("pool")?,
+            Identifier::new("unstake")?,
+            vec![base_coin_tag, quote_coin_tag],
+            arguments,
+        );
+        Ok(())
+    }
 
-    //     move |tx: &mut Transaction| {
-    //         let trade_proof = tx.add(self.config.balance_manager.generate_proof(&params.balance_manager_key));
+    /// Submit a governance proposal
+    ///
+    /// @param params - Parameters for the proposal
+    pub async fn submit_proposal(
+        &self,
+        ptb: &mut ProgrammableTransactionBuilder,
+        params: ProposalParams,
+    ) -> anyhow::Result<()> {
+        let pool = self.config.get_pool(&params.pool_key)?;
+        let balance_manager = self.config.get_balance_manager(&params.balance_manager_key)?;
+        let base_coin = self.config.get_coin(&pool.base_coin)?;
+        let quote_coin = self.config.get_coin(&pool.quote_coin)?;
 
-    //         tx.move_call(
-    //             format!("{}::pool::submit_proposal", self.config.deepbook_package_id()),
-    //             vec![base_coin.type_name.clone(), quote_coin.type_name.clone()],
-    //             vec![
-    //                 tx.object(&pool.address),
-    //                 tx.object(&balance_manager.address),
-    //                 trade_proof,
-    //                 tx.pure_u64(taker_fee),
-    //                 tx.pure_u64(maker_fee),
-    //                 tx.pure_u64(stake_required),
-    //             ],
-    //         );
-    //     }
-    // }
+        let taker_fee = (params.taker_fee * FLOAT_SCALAR as f64).round() as u64;
+        let maker_fee = (params.maker_fee * FLOAT_SCALAR as f64).round() as u64;
+        let stake_required = (params.stake_required * DEEP_SCALAR as f64).round() as u64;
 
-    // /// Vote on a proposal
-    // ///
-    // /// # Arguments
-    // /// * `pool_key` - The key to identify the pool
-    // /// * `balance_manager_key` - The key to identify the BalanceManager
-    // /// * `proposal_id` - The ID of the proposal to vote on
-    // pub fn vote<F>(&self, pool_key: &str, balance_manager_key: &str, proposal_id: &str) -> impl FnOnce(&mut Transaction) -> () {
-    //     let pool = self.config.get_pool(pool_key);
-    //     let balance_manager = self.config.get_balance_manager(balance_manager_key);
-    //     let base_coin = self.config.get_coin(&pool.base_coin);
-    //     let quote_coin = self.config.get_coin(&pool.quote_coin);
+        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
 
-    //     move |tx: &mut Transaction| {
-    //         let trade_proof = tx.add(self.config.balance_manager.generate_proof(balance_manager_key));
+        let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
+        let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
-    //         tx.move_call(
-    //             format!("{}::pool::vote", self.config.deepbook_package_id),
-    //             vec![base_coin.type_name.clone(), quote_coin.type_name.clone()],
-    //             vec![
-    //                 tx.object(&pool.address),
-    //                 tx.object(&balance_manager.address),
-    //                 trade_proof,
-    //                 tx.pure_id(proposal_id),
-    //             ],
-    //         );
-    //     }
-    // }
+        let trade_proof = self
+            .balance_manager_contract
+            .generate_proof(ptb, &params.balance_manager_key)
+            .await?;
+
+        let arguments = vec![
+            ptb.obj(self.client.share_object(pool_id).await?)?,
+            ptb.obj(self.client.share_object(balance_manager_id).await?)?,
+            trade_proof,
+            ptb.pure(taker_fee)?,
+            ptb.pure(maker_fee)?,
+            ptb.pure(stake_required)?,
+        ];
+
+        ptb.programmable_move_call(
+            ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
+            Identifier::new("pool")?,
+            Identifier::new("submit_proposal")?,
+            vec![base_coin_tag, quote_coin_tag],
+            arguments,
+        );
+
+        Ok(())
+    }
+
+    /// Vote on a proposal
+    ///
+    /// @param pool_key - The key to identify the pool
+    /// @param balance_manager_key - The key to identify the BalanceManager
+    /// @param proposal_id - The ID of the proposal to vote on
+    pub async fn vote(
+        &self,
+        ptb: &mut ProgrammableTransactionBuilder,
+        pool_key: &str,
+        balance_manager_key: &str,
+        proposal_id: &str,
+    ) -> anyhow::Result<()> {
+        let pool = self.config.get_pool(pool_key)?;
+        let balance_manager = self.config.get_balance_manager(balance_manager_key)?;
+        let base_coin = self.config.get_coin(&pool.base_coin)?;
+        let quote_coin = self.config.get_coin(&pool.quote_coin)?;
+
+        let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
+        let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
+
+        let trade_proof = self
+            .balance_manager_contract
+            .generate_proof(ptb, balance_manager_key)
+            .await?;
+
+        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let proposal_id = ObjectID::from_hex_literal(proposal_id)?;
+
+        let arguments = vec![
+            ptb.obj(self.client.share_object(pool_id).await?)?,
+            ptb.obj(self.client.share_object(balance_manager_id).await?)?,
+            trade_proof,
+            ptb.pure(proposal_id)?,
+        ];
+
+        ptb.programmable_move_call(
+            ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
+            Identifier::new("pool")?,
+            Identifier::new("vote")?,
+            vec![base_coin_tag, quote_coin_tag],
+            arguments,
+        );
+        Ok(())
+    }
 }
