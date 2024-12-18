@@ -17,8 +17,8 @@ use super::DataReader;
 
 /// GovernanceContract struct for managing governance operations in DeepBook.
 pub struct GovernanceContract {
-    config: DeepBookConfig,
     client: SuiClient,
+    config: DeepBookConfig,
     balance_manager_contract: BalanceManagerContract,
 }
 
@@ -29,13 +29,13 @@ impl GovernanceContract {
     /// @param client - SuiClient instance
     /// @param balance_manager_contract - BalanceManagerContract instance
     pub fn new(
-        config: DeepBookConfig,
         client: SuiClient,
+        config: DeepBookConfig,
         balance_manager_contract: BalanceManagerContract,
     ) -> Self {
         Self {
-            config,
             client,
+            config,
             balance_manager_contract,
         }
     }

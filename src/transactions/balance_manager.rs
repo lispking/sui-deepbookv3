@@ -14,14 +14,14 @@ use super::DataReader;
 
 /// BalanceManagerContract struct for managing BalanceManager operations.
 pub struct BalanceManagerContract {
-    config: DeepBookConfig,
     client: SuiClient,
+    config: DeepBookConfig,
 }
 
 impl BalanceManagerContract {
     /// Creates a new instance of BalanceManagerContract
-    pub fn new(config: DeepBookConfig, client: SuiClient) -> Self {
-        Self { config, client }
+    pub fn new(client: SuiClient, config: DeepBookConfig) -> Self {
+        Self { client, config }
     }
 
     /// Create and share a new BalanceManager
