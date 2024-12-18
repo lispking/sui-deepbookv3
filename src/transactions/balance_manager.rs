@@ -20,6 +20,9 @@ pub struct BalanceManagerContract {
 
 impl BalanceManagerContract {
     /// Creates a new instance of BalanceManagerContract
+    ///
+    /// @param client - SuiClient instance
+    /// @param config - Configuration object for DeepBook
     pub fn new(client: SuiClient, config: DeepBookConfig) -> Self {
         Self { client, config }
     }

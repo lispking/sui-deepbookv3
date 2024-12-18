@@ -9,7 +9,7 @@ use sui_sdk::{types::base_types::ObjectID, SuiClient};
 
 pub mod balance_manager;
 pub mod governance;
-
+pub mod flashloan;
 #[async_trait]
 pub trait DataReader {
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;
