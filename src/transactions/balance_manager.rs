@@ -28,6 +28,8 @@ impl BalanceManagerContract {
     }
 
     /// Create and share a new BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
     pub fn create_and_share_balance_manager(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -60,6 +62,11 @@ impl BalanceManagerContract {
     }
 
     /// Deposit funds into the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
+    /// @param coin_key - The key to identify the coin
+    /// @param amount_to_deposit - The amount to deposit
     pub async fn deposit_into_manager(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -92,6 +99,12 @@ impl BalanceManagerContract {
     }
 
     /// Withdraw funds from the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
+    /// @param coin_key - The key to identify the coin
+    /// @param amount_to_withdraw - The amount to withdraw
+    /// @param recipient - The recipient of the funds
     pub async fn withdraw_from_manager(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -126,6 +139,11 @@ impl BalanceManagerContract {
     }
 
     /// Withdraw all funds from the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
+    /// @param coin_key - The key to identify the coin
+    /// @param recipient - The recipient of the funds
     pub async fn withdraw_all_from_manager(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -156,6 +174,10 @@ impl BalanceManagerContract {
     }
 
     /// Check the balance of the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
+    /// @param coin_key - The key to identify the coin
     pub async fn check_manager_balance(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -182,6 +204,9 @@ impl BalanceManagerContract {
     }
 
     /// Generate a trade proof for the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
     pub async fn generate_proof(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -201,7 +226,10 @@ impl BalanceManagerContract {
     }
 
     /// Generate a trade proof as the owner
-        pub async fn generate_proof_as_owner(
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_id - The ID of the BalanceManager
+    pub async fn generate_proof_as_owner(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         manager_id: &ObjectID,
@@ -218,6 +246,10 @@ impl BalanceManagerContract {
     }
 
     /// Generate a trade proof as a trader
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_id - The ID of the BalanceManager
+    /// @param trade_cap_id - The ID of the TradeCap
     pub async fn generate_proof_as_trader(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -237,6 +269,9 @@ impl BalanceManagerContract {
     }
 
     /// Get the owner of the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
     pub async fn owner(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
@@ -260,6 +295,9 @@ impl BalanceManagerContract {
     }
 
     /// Get the ID of the BalanceManager
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param manager_key - The key to identify the BalanceManager
     pub async fn id(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,

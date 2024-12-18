@@ -10,6 +10,7 @@ use sui_sdk::{types::base_types::ObjectID, SuiClient};
 pub mod balance_manager;
 pub mod governance;
 pub mod flashloan;
+pub mod deepbook_admin;
 #[async_trait]
 pub trait DataReader {
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;
@@ -27,19 +28,19 @@ impl DataReader for SuiClient {
             .ok_or(anyhow::anyhow!("Object {} not found", object_id))
     }
 
-    async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.get_object(manager_id).await?;
+    async fn share_object(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg> {
+        let object = self.get_object(object_id).await?;
         Ok(ObjectArg::SharedObject {
-            id: manager_id,
+            id: object_id,
             initial_shared_version: object.version,
             mutable: false,
         })
     }
 
-    async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.get_object(manager_id).await?;
+    async fn share_object_mutable(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg> {
+        let object = self.get_object(object_id).await?;
         Ok(ObjectArg::SharedObject {
-            id: manager_id,
+            id: object_id,
             initial_shared_version: object.version,
             mutable: true,
         })

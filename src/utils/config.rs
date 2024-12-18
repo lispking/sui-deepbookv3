@@ -109,4 +109,8 @@ impl DeepBookConfig {
     pub fn deep_treasury_id(&self) -> &str {
         &self.deep_treasury_id
     }
+
+    pub fn admin_cap(&self) -> Option<String> {
+        self.admin_cap.clone()
+    }
 }
