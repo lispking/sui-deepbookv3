@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
-
-use sui_json_rpc_types::{SuiObjectData, SuiObjectDataOptions};
 use sui_sdk::types::base_types::{ObjectID, SuiAddress};
 use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use sui_sdk::types::transaction::ObjectArg;
@@ -11,6 +9,8 @@ use sui_sdk::types::{Identifier, TypeTag, SUI_FRAMEWORK_PACKAGE_ID};
 use sui_sdk::SuiClient;
 
 use crate::utils::config::DeepBookConfig;
+
+use super::DataReader;
 
 /// BalanceManagerContract struct for managing BalanceManager operations.
 pub struct BalanceManagerContract {
@@ -286,7 +286,7 @@ impl BalanceManagerContract {
     }
 
     async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.get_object(manager_id).await?;
+        let object = self.client.get_object(manager_id).await?;
         Ok(ObjectArg::SharedObject {
             id: manager_id,
             initial_shared_version: object.version,
@@ -295,21 +295,11 @@ impl BalanceManagerContract {
     }
 
     async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.get_object(manager_id).await?;
+        let object = self.client.get_object(manager_id).await?;
         Ok(ObjectArg::SharedObject {
             id: manager_id,
             initial_shared_version: object.version,
             mutable: true,
         })
-    }
-
-    pub async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData> {
-        self
-            .client
-            .read_api()
-            .get_object_with_options(object_id, SuiObjectDataOptions::full_content())
-            .await?
-            .data
-            .ok_or(anyhow::anyhow!("Object {} not found", object_id))
     }
 }

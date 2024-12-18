@@ -5928,6 +5928,7 @@ name = "sui-deepbookv3"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "lazy_static",
  "serde_json",
  "shared-crypto",
