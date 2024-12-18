@@ -11,6 +11,8 @@ pub mod balance_manager;
 pub mod governance;
 pub mod flashloan;
 pub mod deepbook_admin;
+pub mod deepbook;
+
 #[async_trait]
 pub trait DataReader {
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;

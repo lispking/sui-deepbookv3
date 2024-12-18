@@ -23,7 +23,7 @@ async fn test_create_and_share_balance_manager() {
     let mut ptb = ProgrammableTransactionBuilder::new();
 
     let _ = balance_manager.create_and_share_balance_manager(&mut ptb);
-    // execute_transaction(ptb).await;
+    execute_transaction(ptb).await;
 }
 
 #[tokio::test]
