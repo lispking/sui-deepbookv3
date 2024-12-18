@@ -4,7 +4,7 @@
 use std::str::FromStr;
 use sui_sdk::types::base_types::{ObjectID, SuiAddress};
 use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_sdk::types::transaction::ObjectArg;
+use sui_sdk::types::transaction::Argument;
 use sui_sdk::types::{Identifier, TypeTag, SUI_FRAMEWORK_PACKAGE_ID};
 use sui_sdk::SuiClient;
 
@@ -62,7 +62,7 @@ impl BalanceManagerContract {
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
         coin_key: &str,
-        amount_to_deposit: u64,
+        amount_to_deposit: f64,
     ) -> anyhow::Result<()> {
         let manager_address = self
             .config
@@ -72,10 +72,10 @@ impl BalanceManagerContract {
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?.clone();
-        let deposit_input = amount_to_deposit * coin.scalar;
+        let deposit_input = (amount_to_deposit * coin.scalar as f64).round() as u64;
         // TODO: input coin
 
-        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
+        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
         let deposit = ptb.pure(deposit_input)?;
         ptb.programmable_move_call(
             package_id,
@@ -94,7 +94,7 @@ impl BalanceManagerContract {
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
         coin_key: &str,
-        amount_to_withdraw: u64,
+        amount_to_withdraw: f64,
         recipient: SuiAddress,
     ) -> anyhow::Result<()> {
         let manager_address = self
@@ -105,10 +105,10 @@ impl BalanceManagerContract {
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
-        let withdraw_input = amount_to_withdraw * coin.scalar;
+        let withdraw_input = (amount_to_withdraw * coin.scalar as f64).round() as u64;
         // TODO: input coin
 
-        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
+        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
         let withdraw = ptb.pure(withdraw_input)?;
         let coin_object = ptb.programmable_move_call(
             package_id,
@@ -139,7 +139,7 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
 
-        let manager_key = ptb.obj(self.share_object_mutable(manager_id).await?)?;
+        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
         let withdrawal_coin = ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
@@ -158,7 +158,7 @@ impl BalanceManagerContract {
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
         coin_key: &str,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let manager_address = self
             .config
             .get_balance_manager(manager_key)?
@@ -168,15 +168,14 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
 
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
-        ptb.programmable_move_call(
+        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("balance")?,
             vec![TypeTag::from_str(coin.type_name.as_str())?],
             vec![manager_key],
-        );
-        Ok(())
+        ))
     }
 
     /// Generate a trade proof for the BalanceManager
@@ -184,7 +183,7 @@ impl BalanceManagerContract {
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let balance_manager = self.config.get_balance_manager(manager_key)?;
         let manager_address = balance_manager.address.as_str();
         let trade_cap = balance_manager.trade_cap.clone();
@@ -192,11 +191,10 @@ impl BalanceManagerContract {
 
         if let Some(trade_cap) = trade_cap {
             let trade_cap_id = ObjectID::from_hex_literal(trade_cap.as_str())?;
-            self.generate_proof_as_trader(ptb, &manager_id, &trade_cap_id).await?;
+            Ok(self.generate_proof_as_trader(ptb, &manager_id, &trade_cap_id).await?)
         } else {
-            self.generate_proof_as_owner(ptb, &manager_id).await?;
+            Ok(self.generate_proof_as_owner(ptb, &manager_id).await?)
         }
-        Ok(())
     }
 
     /// Generate a trade proof as the owner
@@ -204,17 +202,16 @@ impl BalanceManagerContract {
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         manager_id: &ObjectID,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
-        let manager_key = ptb.obj(self.share_object(*manager_id).await?)?;
-        ptb.programmable_move_call(
+        let manager_key = ptb.obj(self.client.share_object(*manager_id).await?)?;
+        Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("generate_proof_as_owner")?,
             vec![],
             vec![manager_key],
-        );
-        Ok(())
+        ))
     }
 
     /// Generate a trade proof as a trader
@@ -223,18 +220,17 @@ impl BalanceManagerContract {
         ptb: &mut ProgrammableTransactionBuilder,
         manager_id: &ObjectID,
         trade_cap_id: &ObjectID,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
-        let manager_key = ptb.obj(self.share_object(*manager_id).await?)?;
-        let trade_cap_key = ptb.obj(self.share_object(*trade_cap_id).await?)?;
-        ptb.programmable_move_call(
+        let manager_key = ptb.obj(self.client.share_object(*manager_id).await?)?;
+        let trade_cap_key = ptb.obj(self.client.share_object(*trade_cap_id).await?)?;
+        Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("generate_proof_as_trader")?,
             vec![],
             vec![manager_key, trade_cap_key],
-        );
-        Ok(())
+        ))
     }
 
     /// Get the owner of the BalanceManager
@@ -242,7 +238,7 @@ impl BalanceManagerContract {
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let manager_address = self
             .config
@@ -250,15 +246,14 @@ impl BalanceManagerContract {
             .address
             .as_str();
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
-        ptb.programmable_move_call(
+        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("owner")?,
             vec![],
             vec![manager_key],
-        );
-        Ok(())
+        ))
     }
 
     /// Get the ID of the BalanceManager
@@ -266,7 +261,7 @@ impl BalanceManagerContract {
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         manager_key: &str,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let manager_address = self
             .config
@@ -274,32 +269,13 @@ impl BalanceManagerContract {
             .address
             .as_str();
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
-        let manager_key = ptb.obj(self.share_object(manager_id).await?)?;
-        ptb.programmable_move_call(
+        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("id")?,
             vec![],
             vec![manager_key],
-        );
-        Ok(())
-    }
-
-    async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.client.get_object(manager_id).await?;
-        Ok(ObjectArg::SharedObject {
-            id: manager_id,
-            initial_shared_version: object.version,
-            mutable: false,
-        })
-    }
-
-    async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg> {
-        let object = self.client.get_object(manager_id).await?;
-        Ok(ObjectArg::SharedObject {
-            id: manager_id,
-            initial_shared_version: object.version,
-            mutable: true,
-        })
+        ))
     }
 }
