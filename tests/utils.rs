@@ -2,6 +2,8 @@ use shared_crypto::intent::Intent;
 use sui_config::{
     sui_config_dir, Config, PersistedConfig, SUI_CLIENT_CONFIG, SUI_KEYSTORE_FILENAME,
 };
+use sui_deepbookv3::DataReader;
+use sui_json_rpc_types::SuiTypeTag;
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::{
     rpc_types::SuiTransactionBlockResponseOptions,
@@ -9,7 +11,7 @@ use sui_sdk::{
     types::{
         programmable_transaction_builder::ProgrammableTransactionBuilder,
         quorum_driver_types::ExecuteTransactionRequestType,
-        transaction::{Transaction, TransactionData, TransactionKind},
+        transaction::{Transaction, TransactionData},
     },
     wallet_context::WalletContext,
     SuiClient, SuiClientBuilder,
@@ -110,30 +112,16 @@ pub async fn execute_transaction(ptb: ProgrammableTransactionBuilder) {
     println!("{}", transaction_response);
 }
 
-pub async fn dry_run_transaction(sui_client: &SuiClient, ptb: ProgrammableTransactionBuilder) {
+pub async fn dry_run_transaction(
+    sui_client: &SuiClient,
+    ptb: ProgrammableTransactionBuilder,
+) -> (Vec<u8>, SuiTypeTag) {
     let mut wallet = retrieve_wallet().unwrap();
     let sender = wallet.active_address().unwrap();
     println!("Sender: {}", sender);
 
-    let builder = ptb.finish();
-    let dry_run_response = sui_client
-        .read_api()
-        .dev_inspect_transaction_block(
-            sender,
-            TransactionKind::ProgrammableTransaction(builder),
-            None,
-            None,
-            None,
-        )
+    sui_client
+        .dev_inspect_transaction(sender, ptb)
         .await
-        .unwrap();
-    println!(
-        "results: {:#?}",
-        dry_run_response
-            .results
-            .unwrap()
-            .first()
-            .unwrap()
-            .return_values
-    );
+        .unwrap()
 }

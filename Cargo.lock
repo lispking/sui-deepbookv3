@@ -5929,7 +5929,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bcs",
  "lazy_static",
+ "serde",
  "serde_json",
  "shared-crypto",
  "sui-config",

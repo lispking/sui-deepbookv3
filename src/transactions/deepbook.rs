@@ -4,7 +4,8 @@
 use std::str::FromStr;
 use sui_sdk::{
     types::{
-        base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder, transaction::Argument, Identifier, TypeTag, SUI_CLOCK_OBJECT_ID
+        base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder,
+        transaction::Argument, Identifier, TypeTag, SUI_CLOCK_OBJECT_ID,
     },
     SuiClient,
 };
@@ -16,7 +17,9 @@ use crate::utils::{
     },
 };
 
-use super::{balance_manager::BalanceManagerContract, DataReader};
+use super::balance_manager::BalanceManagerContract;
+
+use crate::DataReader;
 
 /// DeepBookContract struct for managing DeepBook operations
 pub struct DeepBookContract {

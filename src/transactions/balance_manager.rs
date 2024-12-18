@@ -10,9 +10,10 @@ use sui_sdk::SuiClient;
 
 use crate::utils::config::DeepBookConfig;
 
-use super::DataReader;
+use crate::DataReader;
 
 /// BalanceManagerContract struct for managing BalanceManager operations.
+#[derive(Clone)]
 pub struct BalanceManagerContract {
     client: SuiClient,
     config: DeepBookConfig,

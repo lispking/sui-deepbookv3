@@ -13,7 +13,7 @@ use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::{Identifier, TypeTag};
 
 use super::balance_manager::BalanceManagerContract;
-use super::DataReader;
+use crate::DataReader;
 
 /// GovernanceContract struct for managing governance operations in DeepBook.
 pub struct GovernanceContract {

@@ -28,7 +28,7 @@ pub enum Environment {
     Testnet,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeepBookConfig {
     coins: CoinMap,
     pools: PoolMap,

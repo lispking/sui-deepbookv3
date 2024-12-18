@@ -14,7 +14,7 @@ use sui_sdk::{
     SuiClient,
 };
 
-use super::DataReader;
+use crate::DataReader;
 
 /// FlashLoanContract struct for managing flash loans.
 pub struct FlashLoanContract {

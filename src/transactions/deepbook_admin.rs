@@ -15,7 +15,7 @@ use sui_sdk::{
 
 use crate::utils::config::{DeepBookConfig, FLOAT_SCALAR};
 
-use super::DataReader;
+use crate::DataReader;
 
 /// Parameters for creating a pool as admin
 pub struct CreatePoolAdminParams {

@@ -38,9 +38,9 @@ async fn test_balance_manager_owner() {
 
     let _ = balance_manager.owner(&mut ptb, "DEEP").await;
 
-    dry_run_transaction(&sui_client, ptb).await;
+    let result = dry_run_transaction(&sui_client, ptb).await;
+    println!("owner: {:#?}", bcs::from_bytes::<SuiAddress>(&result.0).unwrap());
 }
-
 
 #[tokio::test]
 async fn test_balance_manager_id() {
@@ -54,7 +54,8 @@ async fn test_balance_manager_id() {
 
     let _ = balance_manager.id(&mut ptb, "DEEP").await;
 
-    dry_run_transaction(&sui_client, ptb).await;
+    let result = dry_run_transaction(&sui_client, ptb).await;
+    println!("id: {:#?}", bcs::from_bytes::<SuiAddress>(&result.0).unwrap());
 }
 
 fn deep_book_config() -> DeepBookConfig {

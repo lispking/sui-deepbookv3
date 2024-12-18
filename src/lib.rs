@@ -1,5 +1,84 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod utils;
+use async_trait::async_trait;
+use sui_json_rpc_types::SuiObjectData;
+use sui_json_rpc_types::SuiObjectDataOptions;
+use sui_json_rpc_types::SuiTypeTag;
+use sui_sdk::types::base_types::SuiAddress;
+use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use sui_sdk::types::transaction::ObjectArg;
+use sui_sdk::types::transaction::TransactionKind;
+use sui_sdk::{types::base_types::ObjectID, SuiClient};
+
+pub mod client;
 pub mod transactions;
+pub mod utils;
+
+#[async_trait]
+pub trait DataReader {
+    async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;
+    async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg>;
+    async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg>;
+    async fn dev_inspect_transaction(
+        &self,
+        sender: SuiAddress,
+        ptb: ProgrammableTransactionBuilder,
+    ) -> anyhow::Result<(Vec<u8>, SuiTypeTag)>;
+}
+
+#[async_trait]
+impl DataReader for SuiClient {
+    async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData> {
+        self.read_api()
+            .get_object_with_options(object_id, SuiObjectDataOptions::full_content())
+            .await?
+            .data
+            .ok_or(anyhow::anyhow!("Object {} not found", object_id))
+    }
+
+    async fn share_object(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg> {
+        let object = self.get_object(object_id).await?;
+        Ok(ObjectArg::SharedObject {
+            id: object_id,
+            initial_shared_version: object.version,
+            mutable: false,
+        })
+    }
+
+    async fn share_object_mutable(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg> {
+        let object = self.get_object(object_id).await?;
+        Ok(ObjectArg::SharedObject {
+            id: object_id,
+            initial_shared_version: object.version,
+            mutable: true,
+        })
+    }
+
+    async fn dev_inspect_transaction(
+        &self,
+        sender: SuiAddress,
+        ptb: ProgrammableTransactionBuilder,
+    ) -> anyhow::Result<(Vec<u8>, SuiTypeTag)> {
+        let builder = ptb.finish();
+        let dry_run_response = self
+            .read_api()
+            .dev_inspect_transaction_block(
+                sender,
+                TransactionKind::ProgrammableTransaction(builder),
+                None,
+                None,
+                None,
+            )
+            .await?;
+        Ok(dry_run_response
+            .results
+            .ok_or_else(|| anyhow::anyhow!("Failed to get results"))?
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get first result"))?
+            .return_values
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get first return value"))?
+            .clone())
+    }
+}
