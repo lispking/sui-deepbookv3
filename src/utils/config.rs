@@ -5,9 +5,11 @@ use std::collections::HashMap;
 use sui_sdk::types::base_types::SuiAddress;
 
 use crate::utils::constants::{
-    BalanceManager, Coin, DeepBookPackageIds, Pool, MAINNET_COINS, MAINNET_PACKAGE_IDS,
-    MAINNET_POOLS, TESTNET_COINS, TESTNET_PACKAGE_IDS, TESTNET_POOLS,
+    MAINNET_COINS, MAINNET_PACKAGE_IDS, MAINNET_POOLS, TESTNET_COINS, TESTNET_PACKAGE_IDS,
+    TESTNET_POOLS,
 };
+
+use super::types::{BalanceManager, Coin, Pool, DeepBookPackageIds};
 
 // Constants
 pub const FLOAT_SCALAR: u64 = 1_000_000_000;

@@ -7,6 +7,7 @@ use sui_json_rpc_types::SuiObjectDataOptions;
 use sui_sdk::{types::base_types::ObjectID, SuiClient};
 
 pub mod balance_manager;
+pub mod governance;
 
 #[async_trait]
 pub trait DataReader {

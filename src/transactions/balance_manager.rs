@@ -81,7 +81,7 @@ impl BalanceManagerContract {
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("deposit")?,
-            vec![TypeTag::from_str(coin.type_str.as_str())?],
+            vec![TypeTag::from_str(coin.type_name.as_str())?],
             vec![manager_key, deposit],
         );
 
@@ -114,7 +114,7 @@ impl BalanceManagerContract {
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("withdraw")?,
-            vec![TypeTag::from_str(coin.type_str.as_str())?],
+            vec![TypeTag::from_str(coin.type_name.as_str())?],
             vec![manager_key, withdraw],
         );
 
@@ -144,7 +144,7 @@ impl BalanceManagerContract {
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("withdraw_all")?,
-            vec![TypeTag::from_str(coin.type_str.as_str())?],
+            vec![TypeTag::from_str(coin.type_name.as_str())?],
             vec![manager_key],
         );
 
@@ -173,7 +173,7 @@ impl BalanceManagerContract {
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("balance")?,
-            vec![TypeTag::from_str(coin.type_str.as_str())?],
+            vec![TypeTag::from_str(coin.type_name.as_str())?],
             vec![manager_key],
         );
         Ok(())

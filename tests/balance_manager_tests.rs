@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use sui_deepbookv3::{
     transactions::balance_manager::BalanceManagerContract,
-    utils::{config::{DeepBookConfig, Environment}, constants::BalanceManager},
+    utils::{config::{DeepBookConfig, Environment}, types::BalanceManager},
 };
 use sui_sdk::{types::{
     base_types::SuiAddress, programmable_transaction_builder::ProgrammableTransactionBuilder,
