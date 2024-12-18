@@ -18,7 +18,7 @@ async fn test_create_and_share_balance_manager() {
     let config = deep_book_config();
     println!("config: {:#?}", config);
 
-    let balance_manager = BalanceManagerContract::new(config, sui_client);
+    let balance_manager = BalanceManagerContract::new(sui_client, config);
 
     let mut ptb = ProgrammableTransactionBuilder::new();
 
@@ -32,7 +32,7 @@ async fn test_balance_manager_owner() {
 
     let config = deep_book_config();
 
-    let balance_manager = BalanceManagerContract::new(config, sui_client.clone());
+    let balance_manager = BalanceManagerContract::new(sui_client.clone(), config);
 
     let mut ptb = ProgrammableTransactionBuilder::new();
 
@@ -48,7 +48,7 @@ async fn test_balance_manager_id() {
 
     let config = deep_book_config();
 
-    let balance_manager = BalanceManagerContract::new(config, sui_client.clone());
+    let balance_manager = BalanceManagerContract::new(sui_client.clone(), config);
 
     let mut ptb = ProgrammableTransactionBuilder::new();
 
