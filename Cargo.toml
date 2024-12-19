@@ -22,3 +22,11 @@ bcs = "0.1.6"
 [[example]]
 name = "balance"
 path = "examples/balance.rs"
+
+[[example]]
+name = "account_order_map"
+path = "examples/account_order_map.rs"
+
+[[example]]
+name = "account_open_orders"
+path = "examples/account_open_orders.rs"
