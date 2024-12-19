@@ -66,8 +66,7 @@ impl DataReader for SuiClient {
         Ok(self
             .coin_read_api()
             .select_coins(sender, Some(coin_type), amount as u128, vec![])
-            .await
-            .map(|coin| coin.clone())?)
+            .await?)
     }
 
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData> {

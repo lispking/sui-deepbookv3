@@ -49,7 +49,7 @@ impl FlashLoanContract {
         let quote_coin = self.config.get_coin(&pool.quote_coin)?;
         let input_quantity = (borrow_amount * base_coin.scalar as f64).round() as u64;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
 
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
@@ -92,13 +92,13 @@ impl FlashLoanContract {
         let base_coin_return =
             ptb.command(Command::SplitCoins(base_coin_input, vec![return_amount]));
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
-            ptb.pure(base_coin_return.clone())?,
+            ptb.pure(base_coin_return)?,
             ptb.obj(ObjectArg::ImmOrOwnedObject(flash_loan))?,
         ];
 
@@ -130,7 +130,7 @@ impl FlashLoanContract {
         let quote_coin = self.config.get_coin(&pool.quote_coin)?;
         let input_quantity = (borrow_amount * quote_coin.scalar as f64).round() as u64;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
@@ -172,13 +172,13 @@ impl FlashLoanContract {
         let quote_coin_return =
             ptb.command(Command::SplitCoins(quote_coin_input, vec![return_amount]));
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
-            ptb.pure(quote_coin_return.clone())?,
+            ptb.pure(quote_coin_return)?,
             ptb.obj(ObjectArg::ImmOrOwnedObject(flash_loan))?,
         ];
 

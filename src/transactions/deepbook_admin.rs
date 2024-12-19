@@ -76,7 +76,7 @@ impl DeepBookAdminContract {
         let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
         let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
 
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
         let arguments = vec![
             ptb.obj(self.client.share_object(registry_id).await?)?,
@@ -116,7 +116,7 @@ impl DeepBookAdminContract {
         let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
 
         let pool_id = ObjectID::from_hex_literal(&pool.address)?;
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
 
         let arguments = vec![
@@ -153,7 +153,7 @@ impl DeepBookAdminContract {
         let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
 
         let pool_id = ObjectID::from_hex_literal(&pool.address)?;
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
 
         let arguments = vec![
@@ -182,7 +182,7 @@ impl DeepBookAdminContract {
         ptb: &mut ProgrammableTransactionBuilder,
         version: u64,
     ) -> Result<()> {
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
 
         let arguments = vec![
@@ -211,7 +211,7 @@ impl DeepBookAdminContract {
         ptb: &mut ProgrammableTransactionBuilder,
         version: u64,
     ) -> Result<()> {
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
 
         let arguments = vec![
@@ -240,7 +240,7 @@ impl DeepBookAdminContract {
         ptb: &mut ProgrammableTransactionBuilder,
         treasury_address: &str,
     ) -> Result<()> {
-        let registry_id = ObjectID::from_hex_literal(&self.config.registry_id())?;
+        let registry_id = ObjectID::from_hex_literal(self.config.registry_id())?;
         let admin_cap = ObjectID::from_hex_literal(&self.admin_cap()?)?;
 
         let arguments = vec![

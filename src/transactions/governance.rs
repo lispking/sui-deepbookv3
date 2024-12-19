@@ -65,8 +65,8 @@ impl GovernanceContract {
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
-        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(balance_manager.address.as_str())?;
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
             ptb.obj(self.client.share_object(balance_manager_id).await?)?,
@@ -107,8 +107,8 @@ impl GovernanceContract {
             .generate_proof(ptb, balance_manager_key)
             .await?;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
-        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(balance_manager.address.as_str())?;
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
             ptb.obj(self.client.share_object(balance_manager_id).await?)?,
@@ -144,8 +144,8 @@ impl GovernanceContract {
         let maker_fee = (params.maker_fee * FLOAT_SCALAR as f64).round() as u64;
         let stake_required = (params.stake_required * DEEP_SCALAR as f64).round() as u64;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
-        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(balance_manager.address.as_str())?;
 
         let base_coin_tag = TypeTag::from_str(base_coin.type_name.as_str())?;
         let quote_coin_tag = TypeTag::from_str(quote_coin.type_name.as_str())?;
@@ -200,8 +200,8 @@ impl GovernanceContract {
             .generate_proof(ptb, balance_manager_key)
             .await?;
 
-        let pool_id = ObjectID::from_hex_literal(&pool.address.as_str())?;
-        let balance_manager_id = ObjectID::from_hex_literal(&balance_manager.address.as_str())?;
+        let pool_id = ObjectID::from_hex_literal(pool.address.as_str())?;
+        let balance_manager_id = ObjectID::from_hex_literal(balance_manager.address.as_str())?;
         let proposal_id = ObjectID::from_hex_literal(proposal_id)?;
 
         let arguments = vec![
