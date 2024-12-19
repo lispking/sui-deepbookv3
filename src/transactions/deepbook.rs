@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
+use sui_json_rpc_types::Coin;
 use sui_sdk::{
     types::{
-        base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder,
-        transaction::Argument, Identifier, TypeTag, SUI_CLOCK_OBJECT_ID,
+        base_types::{ObjectID, SuiAddress},
+        programmable_transaction_builder::ProgrammableTransactionBuilder,
+        transaction::{Argument, ObjectArg},
+        Identifier, TypeTag, SUI_CLOCK_OBJECT_ID,
     },
     SuiClient,
 };
@@ -902,109 +905,164 @@ impl DeepBookContract {
         ))
     }
 
-    // /// Swap exact base amount for quote amount
-    // ///
-    // /// @param ptb - ProgrammableTransactionBuilder instance
-    // /// @param params - Parameters for the swap
-    // pub async fn swap_exact_base_for_quote(
-    //     &self,
-    //     ptb: &mut ProgrammableTransactionBuilder,
-    //     params: SwapParams,
-    // ) -> anyhow::Result<()> {
-    //     if params.quote_coin.is_some() {
-    //         return Err(anyhow::anyhow!(
-    //             "quote_coin is not accepted for swapping base asset"
-    //         ));
-    //     }
+    /// Swap exact base amount for quote amount
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param params - Parameters for the swap
+    pub async fn swap_exact_base_for_quote(
+        &self,
+        ptb: &mut ProgrammableTransactionBuilder,
+        params: SwapParams,
+    ) -> anyhow::Result<()> {
+        if params.quote_coin.is_some() {
+            return Err(anyhow::anyhow!(
+                "quote_coin is not accepted for swapping base asset"
+            ));
+        }
 
-    //     let pool = self.config.get_pool(&params.pool_key)?;
-    //     let base_coin = self.config.get_coin(&pool.base_coin)?;
-    //     let quote_coin = self.config.get_coin(&pool.quote_coin)?;
-    //     let deep_coin = self.config.get_coin("DEEP")?;
+        let pool = self.config.get_pool(&params.pool_key)?;
+        let base_coin = self.config.get_coin(&pool.base_coin)?;
+        let quote_coin = self.config.get_coin(&pool.quote_coin)?;
+        let deep_coin = self.config.get_coin("DEEP")?;
 
-    //     let base_amount = (params.amount * base_coin.scalar as f64).round() as u64;
-    //     let deep_amount = (params.deep_amount * DEEP_SCALAR as f64).round() as u64;
-    //     let min_quote = (params.min_out * quote_coin.scalar as f64).round() as u64;
+        let base_amount = (params.amount * base_coin.scalar as f64).round() as u64;
+        let deep_amount = (params.deep_amount * DEEP_SCALAR as f64).round() as u64;
+        let min_quote = (params.min_out * quote_coin.scalar as f64).round() as u64;
 
-    //     let pool_id = ObjectID::from_hex_literal(&pool.address)?;
+        let pool_id = ObjectID::from_hex_literal(&pool.address)?;
 
-    //     let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
-    //     let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
+        let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
+        let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
 
-    //     let arguments = vec![
-    //         ptb.obj(self.client.share_object(pool_id).await?)?,
-    //         ptb.obj(params.base_coin?)?,
-    //         ptb.obj(params.deep_coin?)?,
-    //         ptb.pure(min_quote)?,
-    //         ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
-    //     ];
+        let base_coin = match params.base_coin {
+            Some(coin) => coin,
+            None => {
+                self.get_coin_object(params.sender, base_coin.type_name.clone(), base_amount)
+                    .await?
+            }
+        };
 
-    //     ptb.programmable_move_call(
-    //         ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
-    //         Identifier::new("pool")?,
-    //         Identifier::new("swap_exact_base_for_quote")?,
-    //         vec![base_coin_tag, quote_coin_tag],
-    //         arguments,
-    //     );
+        let deep_coin = match params.deep_coin {
+            Some(coin) => coin,
+            None => {
+                self.get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
+                    .await?
+            }
+        };
 
-    //     Ok(())
-    // }
+        let arguments = vec![
+            ptb.obj(self.client.share_object(pool_id).await?)?,
+            ptb.obj(ObjectArg::ImmOrOwnedObject((
+                base_coin.coin_object_id,
+                base_coin.version,
+                base_coin.digest,
+            )))?,
+            ptb.obj(ObjectArg::ImmOrOwnedObject((
+                deep_coin.coin_object_id,
+                deep_coin.version,
+                deep_coin.digest,
+            )))?,
+            ptb.pure(min_quote)?,
+            ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
+        ];
 
-    // /// Swap exact quote amount for base amount
-    // ///
-    // /// @param ptb - ProgrammableTransactionBuilder instance
-    // /// @param params - Parameters for the swap
-    // pub async fn swap_exact_quote_for_base(
-    //     &self,
-    //     ptb: &mut ProgrammableTransactionBuilder,
-    //     params: SwapParams,
-    // ) -> anyhow::Result<()> {
-    //     if params.base_coin.is_some() {
-    //         return Err(anyhow::anyhow!(
-    //             "base_coin is not accepted for swapping quote asset"
-    //         ));
-    //     }
+        ptb.programmable_move_call(
+            ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
+            Identifier::new("pool")?,
+            Identifier::new("swap_exact_base_for_quote")?,
+            vec![base_coin_tag, quote_coin_tag],
+            arguments,
+        );
 
-    //     let pool = self.config.get_pool(&params.pool_key)?;
-    //     let base_coin = self.config.get_coin(&pool.base_coin)?;
-    //     let quote_coin = self.config.get_coin(&pool.quote_coin)?;
-    //     let deep_coin = self.config.get_coin("DEEP")?;
+        Ok(())
+    }
 
-    //     let quote_amount = (params.amount * quote_coin.scalar as f64).round() as u64;
-    //     let deep_amount = (params.deep_amount * DEEP_SCALAR as f64).round() as u64;
-    //     let min_base = (params.min_out * base_coin.scalar as f64).round() as u64;
+    async fn get_coin_object(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Coin> {
+        Ok(self
+            .client
+            .coin_objects(sender, coin_type, amount)
+            .await?
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get base coin"))?
+            .clone())
+    }
 
-    //     let pool_id = ObjectID::from_hex_literal(&pool.address)?;
+    /// Swap exact quote amount for base amount
+    ///
+    /// @param ptb - ProgrammableTransactionBuilder instance
+    /// @param params - Parameters for the swap
+    pub async fn swap_exact_quote_for_base(
+        &self,
+        ptb: &mut ProgrammableTransactionBuilder,
+        params: SwapParams,
+    ) -> anyhow::Result<()> {
+        if params.base_coin.is_some() {
+            return Err(anyhow::anyhow!(
+                "base_coin is not accepted for swapping quote asset"
+            ));
+        }
 
-    //     let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
-    //     let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
+        let pool = self.config.get_pool(&params.pool_key)?;
+        let base_coin = self.config.get_coin(&pool.base_coin)?;
+        let quote_coin = self.config.get_coin(&pool.quote_coin)?;
+        let deep_coin = self.config.get_coin("DEEP")?;
 
-    //     let arguments = vec![
-    //         ptb.obj(self.client.share_object(pool_id).await?)?,
-    //         params.quote_coin.unwrap_or_else(|| {
-    //             // Create a coin with the specified balance
-    //             // Implementation needed
-    //             unimplemented!()
-    //         }),
-    //         params.deep_coin.unwrap_or_else(|| {
-    //             // Create a DEEP coin with the specified balance
-    //             // Implementation needed
-    //             unimplemented!()
-    //         }),
-    //         ptb.pure(min_base)?,
-    //         ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
-    //     ];
+        let quote_amount = (params.amount * quote_coin.scalar as f64).round() as u64;
+        let deep_amount = (params.deep_amount * DEEP_SCALAR as f64).round() as u64;
+        let min_base = (params.min_out * base_coin.scalar as f64).round() as u64;
 
-    //     ptb.programmable_move_call(
-    //         ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
-    //         Identifier::new("pool")?,
-    //         Identifier::new("swap_exact_quote_for_base")?,
-    //         vec![base_coin_tag, quote_coin_tag],
-    //         arguments,
-    //     );
+        let pool_id = ObjectID::from_hex_literal(&pool.address)?;
 
-    //     Ok(())
-    // }
+        let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
+        let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
+
+        let quote_coin = match params.base_coin {
+            Some(coin) => coin,
+            None => {
+                self.get_coin_object(params.sender, quote_coin.type_name.clone(), quote_amount)
+                    .await?
+            }
+        };
+
+        let deep_coin = match params.deep_coin {
+            Some(coin) => coin,
+            None => {
+                self.get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
+                    .await?
+            }
+        };
+
+        let arguments = vec![
+            ptb.obj(self.client.share_object(pool_id).await?)?,
+            ptb.obj(ObjectArg::ImmOrOwnedObject((
+                quote_coin.coin_object_id,
+                quote_coin.version,
+                quote_coin.digest,
+            )))?,
+            ptb.obj(ObjectArg::ImmOrOwnedObject((
+                deep_coin.coin_object_id,
+                deep_coin.version,
+                deep_coin.digest,
+            )))?,
+            ptb.pure(min_base)?,
+            ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
+        ];
+
+        ptb.programmable_move_call(
+            ObjectID::from_hex_literal(self.config.deepbook_package_id())?,
+            Identifier::new("pool")?,
+            Identifier::new("swap_exact_quote_for_base")?,
+            vec![base_coin_tag, quote_coin_tag],
+            arguments,
+        );
+
+        Ok(())
+    }
 
     /// Get the trade parameters for a given pool
     ///

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use sui_json_rpc_types::Coin;
 use sui_json_rpc_types::SuiObjectData;
 use sui_json_rpc_types::SuiObjectDataOptions;
 use sui_json_rpc_types::SuiTypeTag;
@@ -17,9 +18,15 @@ pub mod utils;
 
 #[async_trait]
 pub trait DataReader {
+    async fn coin_objects(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Vec<Coin>>;
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;
-    async fn share_object(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg>;
-    async fn share_object_mutable(&self, manager_id: ObjectID) -> anyhow::Result<ObjectArg>;
+    async fn share_object(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg>;
+    async fn share_object_mutable(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg>;
     async fn dev_inspect_transaction(
         &self,
         sender: SuiAddress,
@@ -29,6 +36,19 @@ pub trait DataReader {
 
 #[async_trait]
 impl DataReader for SuiClient {
+    async fn coin_objects(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Vec<Coin>> {
+        Ok(self
+            .coin_read_api()
+            .select_coins(sender, Some(coin_type), amount as u128, vec![])
+            .await
+            .map(|coin| coin.clone())?)
+    }
+
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData> {
         self.read_api()
             .get_object_with_options(object_id, SuiObjectDataOptions::full_content())

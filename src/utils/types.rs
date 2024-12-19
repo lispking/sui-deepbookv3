@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use sui_sdk::types::base_types::ObjectID;
+use sui_sdk::types::base_types::{ObjectID, SuiAddress};
 
 /// Represents a balance manager in the system
 #[derive(Debug, Clone)]
@@ -90,13 +90,14 @@ pub struct ProposalParams {
 /// Parameters for swap operations
 #[derive(Debug, Clone)]
 pub struct SwapParams {
+    pub sender: SuiAddress,
     pub pool_key: String,
     pub amount: f64,
     pub deep_amount: f64,
     pub min_out: f64,
-    pub deep_coin: Option<ObjectID>,
-    pub base_coin: Option<ObjectID>,
-    pub quote_coin: Option<ObjectID>,
+    pub deep_coin: Option<sui_json_rpc_types::Coin>,
+    pub base_coin: Option<sui_json_rpc_types::Coin>,
+    pub quote_coin: Option<sui_json_rpc_types::Coin>,
 }
 
 /// Parameters for creating a pool admin
