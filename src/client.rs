@@ -35,7 +35,7 @@ pub struct QuantityOut {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ID {
-    pub bytes: String,
+    pub bytes: SuiAddress,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -346,7 +346,7 @@ impl DeepBookClient {
     ///
     /// @param pool_key - The key of the pool
     /// @param order_id - The order ID
-    pub async fn get_order(&self, pool_key: &str, order_id: &str) -> anyhow::Result<Option<Order>> {
+    pub async fn get_order(&self, pool_key: &str, order_id: u128) -> anyhow::Result<Option<Order>> {
         let mut ptb = ProgrammableTransactionBuilder::new();
         self.deep_book
             .get_order(&mut ptb, pool_key, order_id)
@@ -371,7 +371,7 @@ impl DeepBookClient {
     pub async fn get_order_normalized(
         &self,
         pool_key: &str,
-        order_id: &str,
+        order_id: u128,
     ) -> anyhow::Result<Option<NormalizedOrder>> {
         let order = match self.get_order(pool_key, order_id).await? {
             Some(order) => order,
@@ -624,8 +624,8 @@ impl DeepBookClient {
                 let res = res
                     .first()
                     .ok_or_else(|| anyhow::anyhow!("Failed to get first result"))?;
-                let pool_id = bcs::from_bytes::<ID>(&res.0)?;
-                Ok(pool_id.bytes)
+                let pool_id = bcs::from_bytes::<SuiAddress>(&res.0)?;
+                Ok(pool_id.to_string())
             }
             Err(e) => Err(e),
         }

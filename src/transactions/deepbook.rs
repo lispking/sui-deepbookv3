@@ -446,14 +446,13 @@ impl DeepBookContract {
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
         pool_key: &str,
-        order_id: &str,
+        order_id: u128,
     ) -> anyhow::Result<Argument> {
         let pool = self.config.get_pool(pool_key)?;
         let base_coin = self.config.get_coin(&pool.base_coin)?;
         let quote_coin = self.config.get_coin(&pool.quote_coin)?;
 
         let pool_id = ObjectID::from_hex_literal(&pool.address)?;
-        let order_id = ObjectID::from_hex_literal(order_id)?;
 
         let base_coin_tag = TypeTag::from_str(&base_coin.type_name)?;
         let quote_coin_tag = TypeTag::from_str(&quote_coin.type_name)?;
