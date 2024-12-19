@@ -12,10 +12,10 @@ homepage = "https://github.com/lispking/sui-deepbookv3"
 repository = "https://github.com/lispking/sui-deepbookv3"
 
 [dependencies]
-sui-sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk", version = "*"}
-sui-config = { git = "https://github.com/mystenlabs/sui", package = "sui-config", version = "*" }
-sui-keys = { git = "https://github.com/mystenlabs/sui", package = "sui-keys", version = "*" }
-sui-json-rpc-types = { git = "https://github.com/mystenlabs/sui", package = "sui-json-rpc-types", version = "*" }
+sui-sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk" }
+sui-config = { git = "https://github.com/mystenlabs/sui", package = "sui-config" }
+sui-keys = { git = "https://github.com/mystenlabs/sui", package = "sui-keys" }
+sui-json-rpc-types = { git = "https://github.com/mystenlabs/sui", package = "sui-json-rpc-types" }
 tokio = { version = "1.2", features = ["full"] }
 anyhow = "1.0"
 lazy_static = "1.5.0"
