@@ -3,7 +3,7 @@ use sui_config::{
     sui_config_dir, Config, PersistedConfig, SUI_CLIENT_CONFIG, SUI_KEYSTORE_FILENAME,
 };
 use sui_deepbookv3::DataReader;
-use sui_json_rpc_types::SuiTypeTag;
+use sui_sdk::rpc_types::SuiTypeTag;
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::{
     rpc_types::SuiTransactionBlockResponseOptions,

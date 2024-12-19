@@ -95,9 +95,9 @@ pub struct SwapParams {
     pub amount: f64,
     pub deep_amount: f64,
     pub min_out: f64,
-    pub deep_coin: Option<sui_json_rpc_types::Coin>,
-    pub base_coin: Option<sui_json_rpc_types::Coin>,
-    pub quote_coin: Option<sui_json_rpc_types::Coin>,
+    pub deep_coin: Option<sui_sdk::rpc_types::Coin>,
+    pub base_coin: Option<sui_sdk::rpc_types::Coin>,
+    pub quote_coin: Option<sui_sdk::rpc_types::Coin>,
 }
 
 /// Parameters for creating a pool admin

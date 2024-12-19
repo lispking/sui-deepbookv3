@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use sui_json_rpc_types::Coin;
-use sui_json_rpc_types::SuiObjectData;
-use sui_json_rpc_types::SuiObjectDataOptions;
-use sui_json_rpc_types::SuiTypeTag;
+use sui_sdk::rpc_types::Coin;
+use sui_sdk::rpc_types::SuiObjectData;
+use sui_sdk::rpc_types::SuiObjectDataOptions;
+use sui_sdk::rpc_types::SuiTypeTag;
 use sui_sdk::types::base_types::SuiAddress;
 use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use sui_sdk::types::transaction::ObjectArg;
