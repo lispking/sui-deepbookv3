@@ -38,7 +38,8 @@ async fn test_balance_manager_owner() {
 
     let _ = balance_manager.owner(&mut ptb, "DEEP").await;
 
-    let result = dry_run_transaction(&sui_client, ptb).await;
+    let result = dry_run_transaction(&sui_client, ptb).await.unwrap();
+    let result = result.first().unwrap();
     println!("owner: {:#?}", bcs::from_bytes::<SuiAddress>(&result.0).unwrap());
 }
 
@@ -54,7 +55,8 @@ async fn test_balance_manager_id() {
 
     let _ = balance_manager.id(&mut ptb, "DEEP").await;
 
-    let result = dry_run_transaction(&sui_client, ptb).await;
+    let result = dry_run_transaction(&sui_client, ptb).await.unwrap();
+    let result = result.first().unwrap();
     println!("id: {:#?}", bcs::from_bytes::<SuiAddress>(&result.0).unwrap());
 }
 

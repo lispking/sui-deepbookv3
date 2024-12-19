@@ -115,13 +115,10 @@ pub async fn execute_transaction(ptb: ProgrammableTransactionBuilder) {
 pub async fn dry_run_transaction(
     sui_client: &SuiClient,
     ptb: ProgrammableTransactionBuilder,
-) -> (Vec<u8>, SuiTypeTag) {
+) -> anyhow::Result<Vec<(Vec<u8>, SuiTypeTag)>> {
     let mut wallet = retrieve_wallet().unwrap();
     let sender = wallet.active_address().unwrap();
     println!("Sender: {}", sender);
 
-    sui_client
-        .dev_inspect_transaction(sender, ptb)
-        .await
-        .unwrap()
+    sui_client.dev_inspect_transaction(sender, ptb).await
 }

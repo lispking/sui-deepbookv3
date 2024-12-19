@@ -24,7 +24,7 @@ pub trait DataReader {
         &self,
         sender: SuiAddress,
         ptb: ProgrammableTransactionBuilder,
-    ) -> anyhow::Result<(Vec<u8>, SuiTypeTag)>;
+    ) -> anyhow::Result<Vec<(Vec<u8>, SuiTypeTag)>>;
 }
 
 #[async_trait]
@@ -59,7 +59,7 @@ impl DataReader for SuiClient {
         &self,
         sender: SuiAddress,
         ptb: ProgrammableTransactionBuilder,
-    ) -> anyhow::Result<(Vec<u8>, SuiTypeTag)> {
+    ) -> anyhow::Result<Vec<(Vec<u8>, SuiTypeTag)>> {
         let builder = ptb.finish();
         let dry_run_response = self
             .read_api()
@@ -77,8 +77,6 @@ impl DataReader for SuiClient {
             .first()
             .ok_or_else(|| anyhow::anyhow!("Failed to get first result"))?
             .return_values
-            .first()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get first return value"))?
             .clone())
     }
 }
