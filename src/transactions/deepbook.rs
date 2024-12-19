@@ -977,21 +977,6 @@ impl DeepBookContract {
         Ok(())
     }
 
-    async fn get_coin_object(
-        &self,
-        sender: SuiAddress,
-        coin_type: String,
-        amount: u64,
-    ) -> anyhow::Result<Coin> {
-        Ok(self
-            .client
-            .coin_objects(sender, coin_type, amount)
-            .await?
-            .first()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get base coin"))?
-            .clone())
-    }
-
     /// Swap exact quote amount for base amount
     ///
     /// @param ptb - ProgrammableTransactionBuilder instance
@@ -1226,5 +1211,20 @@ impl DeepBookContract {
             vec![base_coin_tag, quote_coin_tag],
             arguments,
         ))
+    }
+
+    async fn get_coin_object(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Coin> {
+        Ok(self
+            .client
+            .coin_objects(sender, coin_type, amount)
+            .await?
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get base coin"))?
+            .clone())
     }
 }
