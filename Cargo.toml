@@ -30,3 +30,7 @@ path = "examples/account_order_map.rs"
 [[example]]
 name = "account_open_orders"
 path = "examples/account_open_orders.rs"
+
+[[example]]
+name = "get_level2_range"
+path = "examples/get_level2_range.rs"
