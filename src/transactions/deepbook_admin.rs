@@ -68,8 +68,8 @@ impl DeepBookAdminContract {
         let base_scalar = base_coin.scalar;
         let quote_scalar = quote_coin.scalar;
 
-        let adjusted_tick_size = (params.tick_size * FLOAT_SCALAR as f64 * quote_scalar as f64)
-            / base_scalar as f64;
+        let adjusted_tick_size =
+            (params.tick_size * FLOAT_SCALAR as f64 * quote_scalar as f64) / base_scalar as f64;
         let adjusted_lot_size = params.lot_size * base_scalar as f64;
         let adjusted_min_size = params.min_size * base_scalar as f64;
 

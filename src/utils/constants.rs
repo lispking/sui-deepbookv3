@@ -1,8 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
 use lazy_static;
+use std::collections::HashMap;
 
 use super::types::{Coin, DeepBookPackageIds, Pool};
 

@@ -134,7 +134,9 @@ impl GovernanceContract {
         params: ProposalParams,
     ) -> anyhow::Result<()> {
         let pool = self.config.get_pool(&params.pool_key)?;
-        let balance_manager = self.config.get_balance_manager(&params.balance_manager_key)?;
+        let balance_manager = self
+            .config
+            .get_balance_manager(&params.balance_manager_key)?;
         let base_coin = self.config.get_coin(&pool.base_coin)?;
         let quote_coin = self.config.get_coin(&pool.quote_coin)?;
 

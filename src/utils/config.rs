@@ -9,7 +9,7 @@ use crate::utils::constants::{
     TESTNET_POOLS,
 };
 
-use super::types::{BalanceManager, Coin, Pool, DeepBookPackageIds};
+use super::types::{BalanceManager, Coin, DeepBookPackageIds, Pool};
 
 // Constants
 pub const FLOAT_SCALAR: u64 = 1_000_000_000;
