@@ -728,7 +728,7 @@ impl DeepBookClient {
                     min_size: min_size as f64 / base_scalar as f64,
                 })
             }
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     }
 
