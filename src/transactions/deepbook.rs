@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
-use sui_json_rpc_types::Coin;
 use sui_sdk::{
     types::{
-        base_types::{ObjectID, SuiAddress},
-        programmable_transaction_builder::ProgrammableTransactionBuilder,
-        transaction::{Argument, ObjectArg},
-        Identifier, TypeTag, SUI_CLOCK_OBJECT_ID,
+        base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder,
+        transaction::Argument, Identifier, TypeTag, SUI_CLOCK_OBJECT_ID,
     },
     SuiClient,
 };
@@ -937,7 +934,8 @@ impl DeepBookContract {
         let base_coin = match params.base_coin {
             Some(coin) => coin,
             None => {
-                self.get_coin_object(params.sender, base_coin.type_name.clone(), base_amount)
+                self.client
+                    .get_coin_object(params.sender, base_coin.type_name.clone(), base_amount)
                     .await?
             }
         };
@@ -945,23 +943,16 @@ impl DeepBookContract {
         let deep_coin = match params.deep_coin {
             Some(coin) => coin,
             None => {
-                self.get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
+                self.client
+                    .get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
                     .await?
             }
         };
 
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
-            ptb.obj(ObjectArg::ImmOrOwnedObject((
-                base_coin.coin_object_id,
-                base_coin.version,
-                base_coin.digest,
-            )))?,
-            ptb.obj(ObjectArg::ImmOrOwnedObject((
-                deep_coin.coin_object_id,
-                deep_coin.version,
-                deep_coin.digest,
-            )))?,
+            ptb.obj(self.client.coin_object(base_coin).await?)?,
+            ptb.obj(self.client.coin_object(deep_coin).await?)?,
             ptb.pure(min_quote)?,
             ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
         ];
@@ -1009,7 +1000,8 @@ impl DeepBookContract {
         let quote_coin = match params.base_coin {
             Some(coin) => coin,
             None => {
-                self.get_coin_object(params.sender, quote_coin.type_name.clone(), quote_amount)
+                self.client
+                    .get_coin_object(params.sender, quote_coin.type_name.clone(), quote_amount)
                     .await?
             }
         };
@@ -1017,23 +1009,16 @@ impl DeepBookContract {
         let deep_coin = match params.deep_coin {
             Some(coin) => coin,
             None => {
-                self.get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
+                self.client
+                    .get_coin_object(params.sender, deep_coin.type_name.clone(), deep_amount)
                     .await?
             }
         };
 
         let arguments = vec![
             ptb.obj(self.client.share_object(pool_id).await?)?,
-            ptb.obj(ObjectArg::ImmOrOwnedObject((
-                quote_coin.coin_object_id,
-                quote_coin.version,
-                quote_coin.digest,
-            )))?,
-            ptb.obj(ObjectArg::ImmOrOwnedObject((
-                deep_coin.coin_object_id,
-                deep_coin.version,
-                deep_coin.digest,
-            )))?,
+            ptb.obj(self.client.coin_object(quote_coin).await?)?,
+            ptb.obj(self.client.coin_object(deep_coin).await?)?,
             ptb.pure(min_base)?,
             ptb.obj(self.client.share_object(SUI_CLOCK_OBJECT_ID).await?)?,
         ];
@@ -1211,20 +1196,5 @@ impl DeepBookContract {
             vec![base_coin_tag, quote_coin_tag],
             arguments,
         ))
-    }
-
-    async fn get_coin_object(
-        &self,
-        sender: SuiAddress,
-        coin_type: String,
-        amount: u64,
-    ) -> anyhow::Result<Coin> {
-        Ok(self
-            .client
-            .coin_objects(sender, coin_type, amount)
-            .await?
-            .first()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get base coin"))?
-            .clone())
     }
 }

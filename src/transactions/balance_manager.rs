@@ -71,6 +71,7 @@ impl BalanceManagerContract {
     pub async fn deposit_into_manager(
         &self,
         ptb: &mut ProgrammableTransactionBuilder,
+        sender: SuiAddress,
         manager_key: &str,
         coin_key: &str,
         amount_to_deposit: f64,
@@ -84,16 +85,22 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?.clone();
         let deposit_input = (amount_to_deposit * coin.scalar as f64).round() as u64;
-        // TODO: input coin
+        let deposit_coin = self
+            .client
+            .get_coin_object(sender, coin.type_name.clone(), deposit_input)
+            .await?;
 
-        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
-        let deposit = ptb.pure(deposit_input)?;
+        let arguments = vec![
+            ptb.obj(self.client.share_object_mutable(manager_id).await?)?,
+            ptb.pure(self.client.coin_object(deposit_coin).await?)?,
+        ];
+
         ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("deposit")?,
             vec![TypeTag::from_str(coin.type_name.as_str())?],
-            vec![manager_key, deposit],
+            arguments,
         );
 
         Ok(())
@@ -123,16 +130,17 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
         let withdraw_input = (amount_to_withdraw * coin.scalar as f64).round() as u64;
-        // TODO: input coin
 
-        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
-        let withdraw = ptb.pure(withdraw_input)?;
+        let arguments = vec![
+            ptb.obj(self.client.share_object_mutable(manager_id).await?)?,
+            ptb.pure(withdraw_input)?,
+        ];
         let coin_object = ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("withdraw")?,
             vec![TypeTag::from_str(coin.type_name.as_str())?],
-            vec![manager_key, withdraw],
+            arguments,
         );
 
         ptb.transfer_arg(recipient, coin_object);
@@ -161,13 +169,13 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
 
-        let manager_key = ptb.obj(self.client.share_object_mutable(manager_id).await?)?;
+        let arguments = vec![ptb.obj(self.client.share_object(manager_id).await?)?];
         let withdrawal_coin = ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("withdraw_all")?,
             vec![TypeTag::from_str(coin.type_name.as_str())?],
-            vec![manager_key],
+            arguments,
         );
 
         ptb.transfer_arg(recipient, withdrawal_coin);
@@ -194,13 +202,14 @@ impl BalanceManagerContract {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
         let coin = self.config.get_coin(coin_key)?;
 
-        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        let arguments = vec![ptb.obj(self.client.share_object(manager_id).await?)?];
+
         Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("balance")?,
             vec![TypeTag::from_str(coin.type_name.as_str())?],
-            vec![manager_key],
+            arguments,
         ))
     }
 
@@ -220,7 +229,9 @@ impl BalanceManagerContract {
 
         if let Some(trade_cap) = trade_cap {
             let trade_cap_id = ObjectID::from_hex_literal(trade_cap.as_str())?;
-            Ok(self.generate_proof_as_trader(ptb, &manager_id, &trade_cap_id).await?)
+            Ok(self
+                .generate_proof_as_trader(ptb, &manager_id, &trade_cap_id)
+                .await?)
         } else {
             Ok(self.generate_proof_as_owner(ptb, &manager_id).await?)
         }
@@ -236,13 +247,13 @@ impl BalanceManagerContract {
         manager_id: &ObjectID,
     ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
-        let manager_key = ptb.obj(self.client.share_object(*manager_id).await?)?;
+        let arguments = vec![ptb.obj(self.client.share_object(*manager_id).await?)?];
         Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("generate_proof_as_owner")?,
             vec![],
-            vec![manager_key],
+            arguments,
         ))
     }
 
@@ -258,14 +269,16 @@ impl BalanceManagerContract {
         trade_cap_id: &ObjectID,
     ) -> anyhow::Result<Argument> {
         let package_id = ObjectID::from_hex_literal(self.config.deepbook_package_id())?;
-        let manager_key = ptb.obj(self.client.share_object(*manager_id).await?)?;
-        let trade_cap_key = ptb.obj(self.client.share_object(*trade_cap_id).await?)?;
+        let arguments = vec![
+            ptb.obj(self.client.share_object(*manager_id).await?)?,
+            ptb.obj(self.client.share_object(*trade_cap_id).await?)?,
+        ];
         Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("generate_proof_as_trader")?,
             vec![],
-            vec![manager_key, trade_cap_key],
+            arguments,
         ))
     }
 
@@ -285,13 +298,13 @@ impl BalanceManagerContract {
             .address
             .as_str();
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
-        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        let arguments = vec![ptb.obj(self.client.share_object(manager_id).await?)?];
         Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("owner")?,
             vec![],
-            vec![manager_key],
+            arguments,
         ))
     }
 
@@ -311,13 +324,13 @@ impl BalanceManagerContract {
             .address
             .as_str();
         let manager_id = ObjectID::from_hex_literal(manager_address)?;
-        let manager_key = ptb.obj(self.client.share_object(manager_id).await?)?;
+        let arguments = vec![ptb.obj(self.client.share_object(manager_id).await?)?];
         Ok(ptb.programmable_move_call(
             package_id,
             Identifier::new("balance_manager")?,
             Identifier::new("id")?,
             vec![],
-            vec![manager_key],
+            arguments,
         ))
     }
 }

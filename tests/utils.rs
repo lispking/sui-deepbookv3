@@ -57,6 +57,7 @@ pub fn retrieve_wallet() -> anyhow::Result<WalletContext> {
     Ok(wallet)
 }
 
+#[allow(dead_code)]
 pub async fn execute_transaction(ptb: ProgrammableTransactionBuilder) {
     let sui_client = SuiClientBuilder::default().build_testnet().await.unwrap();
     println!("Sui testnet version: {}", sui_client.api_version());

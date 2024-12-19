@@ -18,13 +18,20 @@ pub mod utils;
 
 #[async_trait]
 pub trait DataReader {
-    async fn coin_objects(
+    async fn get_coin_object(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Coin>;
+    async fn get_coin_objects(
         &self,
         sender: SuiAddress,
         coin_type: String,
         amount: u64,
     ) -> anyhow::Result<Vec<Coin>>;
     async fn get_object(&self, object_id: ObjectID) -> anyhow::Result<SuiObjectData>;
+    async fn coin_object(&self, coin: Coin) -> anyhow::Result<ObjectArg>;
     async fn share_object(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg>;
     async fn share_object_mutable(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg>;
     async fn dev_inspect_transaction(
@@ -36,7 +43,21 @@ pub trait DataReader {
 
 #[async_trait]
 impl DataReader for SuiClient {
-    async fn coin_objects(
+    async fn get_coin_object(
+        &self,
+        sender: SuiAddress,
+        coin_type: String,
+        amount: u64,
+    ) -> anyhow::Result<Coin> {
+        Ok(self
+            .get_coin_objects(sender, coin_type, amount)
+            .await?
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get base coin"))?
+            .clone())
+    }
+
+    async fn get_coin_objects(
         &self,
         sender: SuiAddress,
         coin_type: String,
@@ -55,6 +76,14 @@ impl DataReader for SuiClient {
             .await?
             .data
             .ok_or(anyhow::anyhow!("Object {} not found", object_id))
+    }
+
+    async fn coin_object(&self, coin: Coin) -> anyhow::Result<ObjectArg> {
+        Ok(ObjectArg::ImmOrOwnedObject((
+            coin.coin_object_id,
+            coin.version,
+            coin.digest,
+        )))
     }
 
     async fn share_object(&self, object_id: ObjectID) -> anyhow::Result<ObjectArg> {
