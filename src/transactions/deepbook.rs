@@ -11,7 +11,7 @@ use sui_sdk::{
 };
 
 use crate::utils::{
-    config::{DeepBookConfig, DEEP_SCALAR, FLOAT_SCALAR, GAS_BUDGET, MAX_TIMESTAMP},
+    config::{DeepBookConfig, DEEP_SCALAR, FLOAT_SCALAR, MAX_TIMESTAMP},
     types::{
         OrderType, PlaceLimitOrderParams, PlaceMarketOrderParams, SelfMatchingOptions, SwapParams,
     },
