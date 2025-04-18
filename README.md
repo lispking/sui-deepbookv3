@@ -8,4 +8,4 @@ Four months ago, I finished developing the Rust version of the DeepSeek v3 libra
 
 If you'd like to contribute to the continuous improvement of this project, you're warmly welcome to submit pull requests (PRs) to help with development. Additionally, if you're willing to offer support, you can also make donations to help the project continue to optimize and upgrade, enabling it to unleash even greater potential! 
 
-`0xfae4887073d5fa0756910fed76d039d718ab2541f82fe0155a6c2193156f5a3d`
+sui wallet: `0xfae4887073d5fa0756910fed76d039d718ab2541f82fe0155a6c2193156f5a3d`
