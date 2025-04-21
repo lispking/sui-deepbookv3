@@ -1,3 +1,5 @@
+> This project is no longer maintained and has been contributed to the HOH community: [https://github.com/hoh-zone/sui-deepbookv3](https://github.com/hoh-zone/sui-deepbookv3)
+
 # DeepBook Rust SDK
 
 This is a Rust SDK for DeepBook.
